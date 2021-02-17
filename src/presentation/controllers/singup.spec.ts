@@ -1,9 +1,13 @@
 import { SingUpController } from './singup';
 import { MissingParamError } from '../errors/missing-param-error';
 
+const makeSut = (): SingUpController => {
+  return new SingUpController();
+};
+
 describe('SignUp Controller', () => {
   test('Should return 400 if no name if provided', () => {
-    const sut = new SingUpController();
+    const sut = makeSut();
     const httpRequest = {
       body: {
         email: 'anyEmail@email.com',
