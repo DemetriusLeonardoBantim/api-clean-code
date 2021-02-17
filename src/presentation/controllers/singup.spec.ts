@@ -1,11 +1,8 @@
 import { SingUpController } from './singup';
 import { EmailValidator } from '../protocols/';
 import { ServerError, MissingParamError, InvalidParamError } from '../errors/';
-
-interface SutTypes {
-  sut: SingUpController;
-  emailValidatorStub: EmailValidator;
-}
+import { AccountModel } from '../../domain/models/account';
+import { AddAccount, AddAccountModel } from '../../domain/usecases/add-account';
 
 const makeEmailValidator = (): EmailValidator => {
   class EmailValidatorStub implements EmailValidator {
@@ -14,6 +11,21 @@ const makeEmailValidator = (): EmailValidator => {
     }
   }
   return new EmailValidatorStub();
+};
+
+const makeAddAccount = (): AddAccount => {
+  class AddAccountStub implements AddAccount {
+    add(account: AddAccountModel): AccountModel {
+      const fakeAccount = {
+        id: 'validId',
+        name: 'validName',
+        email: 'validEmail@email.com',
+        password: 'validPassword',
+      };
+      return fakeAccount;
+    }
+  }
+  return new AddAccountStub();
 };
 
 const makeEmailValidatorWithError = (): EmailValidator => {
@@ -25,12 +37,20 @@ const makeEmailValidatorWithError = (): EmailValidator => {
   return new EmailValidatorStub();
 };
 
+interface SutTypes {
+  sut: SingUpController;
+  emailValidatorStub: EmailValidator;
+  addAccountStub: AddAccount;
+}
+
 const makeSut = (): SutTypes => {
   const emailValidatorStub = makeEmailValidator();
-  const sut = new SingUpController(emailValidatorStub);
+  const addAccountStub = makeAddAccount();
+  const sut = new SingUpController(emailValidatorStub, addAccountStub);
   return {
     sut,
     emailValidatorStub,
+    addAccountStub,
   };
 };
 describe('SignUp Controller', () => {
@@ -133,6 +153,24 @@ describe('SignUp Controller', () => {
     };
     sut.handle(httpRequest);
     expect(isValidSpy).toHaveBeenCalledWith('anyEmail@email.com');
+  });
+  test('Should call AddAccount with correct values', () => {
+    const { sut, addAccountStub } = makeSut();
+    const addSpy = jest.spyOn(addAccountStub, 'add');
+    const httpRequest = {
+      body: {
+        name: 'anyName',
+        email: 'anyEmail@email.com',
+        password: 'anyPassword',
+        passwordConfirmation: 'anyPassword',
+      },
+    };
+    sut.handle(httpRequest);
+    expect(addSpy).toHaveBeenCalledWith({
+      name: 'anyName',
+      email: 'anyEmail@email.com',
+      password: 'anyPassword',
+    });
   });
   test('Should return 500 if EmailValidator throws', () => {
     const { sut, emailValidatorStub } = makeSut();
