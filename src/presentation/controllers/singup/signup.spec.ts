@@ -28,6 +28,7 @@ const makeAddAccount = (): AddAccount => {
         name: 'validName',
         email: 'validEmail@email.com',
         password: 'validPassword',
+        passwordConfirmation: 'validPassword',
       };
       return fakeAccount;
     }
@@ -212,5 +213,25 @@ describe('SignUp Controller', () => {
     const httpResponse = sut.handle(httpRequest);
     expect(httpResponse.statusCode).toBe(500);
     expect(httpResponse.body).toEqual(new ServerError());
+  });
+  test('Should return 200 if valid data is provided', () => {
+    const { sut } = makeSut();
+    const httpRequest = {
+      body: {
+        name: 'validName',
+        email: 'validEmail@email.com',
+        password: 'validPassword',
+        passwordConfirmation: 'validPassword',
+      },
+    };
+    const httpResponse = sut.handle(httpRequest);
+    expect(httpResponse.statusCode).toBe(200);
+    expect(httpResponse.body).toEqual({
+      id: 'validId',
+      name: 'validName',
+      email: 'validEmail@email.com',
+      password: 'validPassword',
+      passwordConfirmation: 'validPassword',
+    });
   });
 });
